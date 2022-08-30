@@ -2,12 +2,15 @@ import 'package:firebase_app/widget/bottom_sheet_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class FirebaseAuthService {
 
   // เรียก Obj ของ Firebase
   static FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   static Stream<User?> firebaseListener = _firebaseAuth.authStateChanges();
+
+  static GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // ==============================================================================
   // สร้างฟังก์ชันสำหรับการสมัครสมาชิกด้วยเบอร์โทรศัพท์และยืนยันด้วย SMS OTP
@@ -79,6 +82,32 @@ class FirebaseAuthService {
       }
     );
   }
+
+  // ==============================================================================
+  // สร้างฟังก์ชันสำหรับเข้าระบบด้วย Google Gmail
+  // ==============================================================================
+  Future signInWithGoogle(BuildContext context) async {
+
+    final GoogleSignInAccount? account = await _googleSignIn.signIn();
+    // นำ account มา authentication
+    final GoogleSignInAuthentication _googleAuth = await account!.authentication;
+    // ตรวจสอบ token
+    final AuthCredential _credential = GoogleAuthProvider.credential(
+      idToken: _googleAuth.idToken,
+      accessToken: _googleAuth.accessToken,
+    );
+    // ถ้า token ตรง -> ไปหน้า Home
+    _firebaseAuth.signInWithCredential(_credential).then((UserCredential result){
+      Navigator.of(context).pushReplacementNamed('/home');
+    }).catchError((e) {
+      BottomSheetWidget().bottomSheet(context, "มีข้อผิดพลาด", "ข้อมูลการ Sign In ไม่ถูกต้อง");
+    });
+    
+    // return (
+    //   await _firebaseAuth.signInWithCredential(credential)
+    // ).user.uid;
+  }
+
 
   // ==============================================================================
   // สร้างฟังก์ชันสำหรับการ login ด้วย Email
