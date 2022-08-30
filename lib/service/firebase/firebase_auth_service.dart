@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:firebase_app/widget/bottom_sheet_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_login_facebook/flutter_login_facebook.dart';
+import 'package:http/http.dart' as http;
 
 class FirebaseAuthService {
 
@@ -11,6 +14,7 @@ class FirebaseAuthService {
   static Stream<User?> firebaseListener = _firebaseAuth.authStateChanges();
 
   static GoogleSignIn _googleSignIn = GoogleSignIn();
+  static FacebookLogin _facebookLogin = FacebookLogin();
 
   // ==============================================================================
   // สร้างฟังก์ชันสำหรับการสมัครสมาชิกด้วยเบอร์โทรศัพท์และยืนยันด้วย SMS OTP
@@ -108,6 +112,36 @@ class FirebaseAuthService {
     // ).user.uid;
   }
 
+  // ==============================================================================
+  // สร้างฟังก์ชันสำหรับเข้าระบบด้วย Facebook
+  // ==============================================================================
+  Future signInWithFacebook(BuildContext context) async {
+    final FacebookLoginResult result = await _facebookLogin.logIn(
+      permissions: [
+        FacebookPermission.email
+      ]
+    );
+
+    switch (result.status) {
+      case FacebookLoginStatus.success:
+        
+        final String token = result.accessToken!.token;
+        // อ่านข้อมูลของ User
+        final response = await http.get(Uri.parse('https://graph.facebook.com/v2.12/me?fields=name,first_name,last_name,email&access_token=${token}'));
+        final profile = jsonDecode(response.body);
+        print(profile);
+
+        // ยังไม่ได้เก็บข้อมูล
+        // Navigator.pushReplacementNamed(context, '/home');
+        break;
+      case FacebookLoginStatus.cancel:
+        BottomSheetWidget().bottomSheet(context,"มีข้อผิดพลาด","ผู้ใช้ยกเลิกการเข้าใช้งาน");
+        break;
+      case FacebookLoginStatus.error:
+        BottomSheetWidget().bottomSheet(context,"มีข้อผิดพลาด","มีข้อผิดพลาด ${result.error.toString()} ในระหว่างการเข้าใช้งาน");
+        break;
+    }
+  }
 
   // ==============================================================================
   // สร้างฟังก์ชันสำหรับการ login ด้วย Email

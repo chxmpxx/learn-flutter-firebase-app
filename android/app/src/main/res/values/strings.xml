@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlutterFirebaseApp</string>
+
+    <!-- App ID -->
+    <string name="facebook_app_id">xxx</string>
+    <!-- Client token -->
+    <string name="facebook_client_token">xxx</string>
+
+</resources>
